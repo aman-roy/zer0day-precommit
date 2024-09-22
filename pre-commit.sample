@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Path to Python script inside the submodule
+SBOM_SCRIPT="sbom-precommit/sbom_parser.py"
+
+# Check if syft is installed
+if ! command -v syft &> /dev/null
+then
+    echo "Syft could not be found. Please install Syft and try again."
+    exit 1
+fi
+
+# Generate SBOM and parse it
+echo "Generating SBOM and checking open-source libraries and vulnerabilities..."
+
+# Run the Python script that generates the SBOM and handles the API calls
+python3 "$SBOM_SCRIPT"
+
+# Check if the script ran successfully
+if [ $? -ne 0 ]; then
+    echo "Vulnerabilities found or SBOM processing failed. Aborting commit."
+    exit 1
+fi
+
+echo "No vulnerabilities found. Proceeding with commit."
