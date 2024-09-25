@@ -30,7 +30,9 @@ def check_github_repository(repo_url):
         pass
     return False
 
-def check_package_registry(purl):
+def purl_to_url(purl):
+    url = ""
+
     # TODO: Add support for more languages
     if purl.startswith('pkg:pypi'):
         package_name = re.search(r'pkg:pypi/(.+?)(?:@|$)', purl).group(1)
@@ -53,7 +55,13 @@ def check_package_registry(purl):
     elif purl.startswith('pkg:golang'):
         package_name = re.search(r'pkg:golang/(.+?)(?:@|$)', purl).group(1)
         url = f"https://pkg.go.dev/{package_name}?tab=licenses"
-    else:
+
+    return url
+
+
+def check_package_registry(purl):
+    url = purl_to_url(purl)
+    if url == "":
         return False
 
     try:
@@ -97,6 +105,8 @@ def parse_sbom(cyclonedx_file):
         name = component.get('name', '')
         version = component.get('version', '')
         purl = component.get('purl', '')
+        url = component.get("externalReferences", [{}])[0].get("url", "No URL provided")
+
         licenses = component.get('licenses', [])
         
         is_opensource = False
@@ -117,6 +127,7 @@ def parse_sbom(cyclonedx_file):
                 'name': name,
                 'version': version,
                 'license': license_id if license_id else 'LIKELY_OPENSOURCE'
+                'url': url if url == "NO URL provided" or url == "" else purl_to_url(purl)
             })
     
     return opensource_libs
